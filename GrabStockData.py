@@ -6,6 +6,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import Select
+from selenium.common.exceptions import TimeoutException
 import decimal 
 import os, sys
 import datetime
@@ -15,6 +16,7 @@ import requests
 import argparse
 import socketio
 import json
+import pandas as pd
 
 calledTimes = 0
 
@@ -22,17 +24,35 @@ calledTimes = 0
 
 
 def dataframeFromMySQL(MysqlConn,WKN):
+    return 0
 
 def dataframeToMySQL(df,MysqlConn,WKN):
+    return 0
 
 
 def getTableValuesOnePage(driver,ec):
     global calledTimes
+    
+    df = pd.DataFrame(
+    {"Date" : [],
+    "Open" : [],
+    "High" : [],
+    "Low" : [],
+    "Close" : [],
+    "Volume" : []
+    })
+
+
     cnt = 0
 
     calledTimes = calledTimes + 1
     print('calledTimes: '+str(calledTimes))
-    WebDriverWait(driver, 60).until(ec.presence_of_element_located((By.XPATH, './/*[@id="id_pricedata-layer"]/div/div[2]/div/div/div/div/div/div/div[2]/table')))
+    try: 
+        WebDriverWait(driver, 60).until(ec.presence_of_element_located((By.XPATH, './/*[@id="id_pricedata-layer"]/div/div[2]/div/div/div/div/div/div/div[2]/table')))
+    except (TimeoutException):
+        print("end of pagination")
+        return liste
+
     table = driver.find_elements_by_xpath('.//*[@id="id_pricedata-layer"]/div/div[2]/div/div/div/div/div/div/div[2]/table')
     #table = driver.find_elements_by_class_name('table table--collapse-sm display table--mobile-table')
     WebDriverWait(driver, 60).until(ec.presence_of_element_located((By.CLASS_NAME, 'table__column--top')))
@@ -46,20 +66,39 @@ def getTableValuesOnePage(driver,ec):
         ccount = cnt % 6
         if ccount == 0:
             print('Date: ' + record.text)
+            Date = record.text
         if ccount == 1:
             print('Open: ' + record.text)
+            Open = record.text
         if ccount == 2:
-            print('High: ' + record.text)    
+            print('High: ' + record.text)
+            High = record.text  
         if ccount == 3:
             print('Low: ' + record.text)
+            Low = record.text  
         if ccount == 4:
             print('Close: ' + record.text)
+            Close = record.text 
         if ccount == 5:
             print('Volume: ' + record.text)
+            Volume = record.text
+                
+            dfTmp = pd.DataFrame(
+            {"Date" : [Date],
+            "Open" : [Open],
+            "High" : [High],
+            "Low" : [Low],
+            "Close" : [Close],
+            "Volume" : [Volume]
+            })
+            df.append(dfTmp)
+
+
+            
 
         cnt = (cnt + 1)
 
-    return cnt
+    return  (cnt,df) 
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-w', '--wkn')
@@ -114,8 +153,9 @@ WebDriverWait(driver, 20).until(ec.visibility_of_element_located((By.LINK_TEXT, 
 
 
 selectMarket = driver.find_elements_by_xpath('.//*[@id="marketSelect"]')
-selectMarket[0]
-Select(selectMarket[0]).select_by_visible_text('Xetra')
+if len(selectMarket) > 0:
+    selectMarket[0]
+    Select(selectMarket[0]).select_by_visible_text('Xetra')
 
 
 time.sleep(2)
@@ -149,9 +189,10 @@ ActionChains(driver).move_to_element(WebDriverWait(driver, 20).until(ec.element_
 
 recordcount = -1
 while recordcount != 0:
-    recordcount = getTableValuesOnePage(driver,ec)
+    (recordcount,df) = getTableValuesOnePage(driver,ec)
     print('recordcount: ' + str(recordcount))
-    time.sleep(2)
+
+    time.sleep(1)
     driver.execute_script("arguments[0].scrollIntoView();", WebDriverWait(driver, 20).until(ec.visibility_of_element_located((By.CLASS_NAME, 'icon__svg'))))
    
     ActionChains(driver).move_to_element(WebDriverWait(driver, 20).until(ec.element_to_be_clickable((By.XPATH, './/*[@id="id_pricedata-layer"]/div/div[2]/div/div/div/div/div/div/div[3]/div[1]/div[2]')))).click().perform()
