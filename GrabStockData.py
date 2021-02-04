@@ -7,6 +7,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import Select
 from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import StaleElementReferenceException
 from decimal import Decimal
 import decimal 
 import os, sys
@@ -21,6 +22,8 @@ import pandas as pd
 import mysql.connector
 from dateutil.parser import parse
 from sqlalchemy import Numeric
+from sqlalchemy import Date
+import dateparser # pip install dateparser
 
 #pip install mysql-connector
 #import MySQLdb
@@ -28,6 +31,7 @@ from sqlalchemy import Numeric
 import keyring
 #keyring.set_password("system", "quant", "")
 pw = keyring.get_password("system", "quant")
+#locale.setlocale(locale.LC_ALL, 'german')
 locale.setlocale(locale.LC_ALL, 'german')
 
 import mysql.connector
@@ -57,10 +61,9 @@ def dataframeFromMySQL(MysqlConn,WKN):
 
 def dataframeToMySQL(df,MysqlConn,WKN):
     
- 
 
     df['wkn'] = WKN
-    df.to_sql(con=MysqlConn, name='StockQuotesDailyDF', if_exists='append',  dtype={"Open": Numeric(),"High": Numeric(),"Low": Numeric(),"Close": Numeric()})
+    df.to_sql(con=MysqlConn, name='StockQuotesDailyDF', if_exists='append',  dtype={"Date": Date(), "Open": Numeric(precision=8, scale=2, decimal_return_scale=2),"High": Numeric(),"Low": Numeric(),"Close": Numeric()})
     # Execute a query
     #cur.execute("SELECT CURDATE()")
 
@@ -96,63 +99,73 @@ def getTableValuesOnePage(driver,ec):
 
     calledTimes = calledTimes + 1
     print('calledTimes: '+str(calledTimes))
-    try: 
-        WebDriverWait(driver, 60).until(ec.presence_of_element_located((By.XPATH, './/*[@id="id_pricedata-layer"]/div/div[2]/div/div/div/div/div/div/div[2]/table')))
+    try:
+        table = WebDriverWait(driver, 60).until(ec.presence_of_all_elements_located((By.XPATH, './/*[@id="id_pricedata-layer"]/div/div[2]/div/div/div/div/div/div/div[2]/table')))
+        
+        #table = driver.find_elements_by_xpath('.//*[@id="id_pricedata-layer"]/div/div[2]/div/div/div/div/div/div/div[2]/table')
+        #time.sleep(2)
+
+        #table = driver.find_elements_by_class_name('table table--collapse-sm display table--mobile-table')
+        WebDriverWait(driver, 60).until(ec.presence_of_element_located((By.CLASS_NAME, 'table__column--top')))
+    
+        recordss = table[0].find_elements_by_class_name('table__column--top')
+        recordcopy = []
+        #records = recordss.copy()
+        for record in recordss:
+            recordcopy.append(record.text)
+            
+        
+        for record in recordcopy:
+
+            #print('cnt: '+str(cnt))
+            #print(record)
+            ccount = cnt % 6
+            if ccount == 0:
+                #print('Date: ' + record.text)
+                
+                dt = dateparser.parse(record, languages=['de'])
+                #c = parse(record)
+                Date = dt #Date(record.text) .strftime('%Y-%m-%d')
+                
+            if ccount == 1:
+                #print('Open: ' + record.text)
+                Open = locale.atof(record, decimal.Decimal)
+            if ccount == 2:
+                #print('High: ' + record.text)
+                High = locale.atof(record, decimal.Decimal)
+            if ccount == 3:
+                #print('Low: ' + record.text)
+                Low = locale.atof(record, decimal.Decimal)
+            if ccount == 4:
+                #print('Close: ' + record.text)
+                Close = locale.atof(record, decimal.Decimal)
+            if ccount == 5:
+                #print('Volume: ' + record.text)
+                Volume = record
+                if "Mio." in Volume:
+                    vpre= Volume.split('Mio.')[0]
+                    vpre = int(vpre) * 1000000
+                    Volume = vpre
+
+
+            if ccount == 5:       
+                dfTmp = pd.DataFrame(
+                {"Date" : [Date],
+                "Open" : [Open],
+                "High" : [High],
+                "Low" : [Low],
+                "Close" : [Close],
+                "Volume" : [Volume]
+                })
+                df = df.append(dfTmp)
+
+
+                
+
+            cnt = (cnt + 1)
     except (TimeoutException):
         print("end of pagination")
-        return liste
-
-    table = driver.find_elements_by_xpath('.//*[@id="id_pricedata-layer"]/div/div[2]/div/div/div/div/div/div/div[2]/table')
-    #table = driver.find_elements_by_class_name('table table--collapse-sm display table--mobile-table')
-    WebDriverWait(driver, 60).until(ec.presence_of_element_located((By.CLASS_NAME, 'table__column--top')))
-  
-    records = table[0].find_elements_by_class_name('table__column--top') 
-    time.sleep(2)
-    for record in records:
-
-        #print('cnt: '+str(cnt))
-        #print(record)
-        ccount = cnt % 6
-        if ccount == 0:
-            #print('Date: ' + record.text)
-            dt = parse(record.text)
-            Date = dt#Date(record.text)
-        if ccount == 1:
-            #print('Open: ' + record.text)
-            Open = locale.atof(record.text, decimal.Decimal)
-        if ccount == 2:
-            #print('High: ' + record.text)
-            High = locale.atof(record.text, decimal.Decimal)
-        if ccount == 3:
-            #print('Low: ' + record.text)
-            Low = locale.atof(record.text, decimal.Decimal)
-        if ccount == 4:
-            #print('Close: ' + record.text)
-            Close = locale.atof(record.text, decimal.Decimal)
-        if ccount == 5:
-            #print('Volume: ' + record.text)
-            Volume = record.text
-            if "Mio." in Volume:
-                vpre= Volume.split('Mio.')[0]
-                vpre = int(vpre) * 1000000
-                Volume = vpre
-
-
-        if ccount == 5:       
-            dfTmp = pd.DataFrame(
-            {"Date" : [Date],
-            "Open" : [Open],
-            "High" : [High],
-            "Low" : [Low],
-            "Close" : [Close],
-            "Volume" : [Volume]
-            })
-            df = df.append(dfTmp)
-
-
-            
-
-        cnt = (cnt + 1)
+        return (df.count(),df)
 
     return  (cnt,df) 
 
@@ -161,7 +174,7 @@ parser.add_argument('-w', '--wkn')
 args = parser.parse_args()
 wkn = args.wkn
 
-locale.setlocale(locale.LC_ALL, 'de_DE.UTF-8') # 
+#locale.setlocale(locale.LC_ALL, 'de_DE.UTF-8') # 
 print(os.getcwd())
 
 
@@ -256,9 +269,15 @@ recordcount = -1
 while recordcount != 0:
     (recordcount,df) = getTableValuesOnePage(driver,ec)
     print('recordcount: ' + str(df.count()))
-    dataframeToMySQL(df.copy(),engine,wkn)
-
-    time.sleep(1)
+    try:
+        dataframeToMySQL(df.copy(),engine,wkn)
+    except StaleElementReferenceException as e:
+        print(e)
+        (recordcount,df) = getTableValuesOnePage(driver,ec)
+        print('after stale recordcount: ' + str(df.count()))
+        dataframeToMySQL(df.copy(),engine,wkn)
+          
+    time.sleep(2)
     driver.execute_script("arguments[0].scrollIntoView();", WebDriverWait(driver, 20).until(ec.visibility_of_element_located((By.CLASS_NAME, 'icon__svg'))))
    
     ActionChains(driver).move_to_element(WebDriverWait(driver, 20).until(ec.element_to_be_clickable((By.XPATH, './/*[@id="id_pricedata-layer"]/div/div[2]/div/div/div/div/div/div/div[3]/div[1]/div[2]')))).click().perform()
