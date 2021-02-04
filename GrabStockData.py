@@ -17,21 +17,25 @@ import argparse
 import socketio
 import json
 import pandas as pd
-#import mysql.connector
-import MySQLdb
+import mysql.connector
+#import MySQLdb
 #pip install mysql-connector
 # Connect to server
+import keyring
+#keyring.set_password("system", "quant", "")
+pw = keyring.get_password("system", "quant")
 
 import mysql.connector
 from sqlalchemy import create_engine
-MySQLdb.connect("127.0.0.1","root","","db" )
-engine = create_engine('mysql+mysqlconnector://quant:loginme@nuc.lan/quant', echo=False)
+
+#MySQLdb.connect("nuc.lan","root",pw,"quant" )
+engine = create_engine('mysql+mysqlconnector://quant:'+pw+'@nuc.lan/quant', echo=True)
 
 #cnx = mysql.connector.connect(
 #    host="nuc.lan",
 #    port=3306,
 #    user="quant",
-#    password="loginme")
+#    password=pw)
 
 # Get a cursor
 
