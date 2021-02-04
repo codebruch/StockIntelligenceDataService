@@ -17,6 +17,25 @@ import argparse
 import socketio
 import json
 import pandas as pd
+#import mysql.connector
+import MySQLdb
+#pip install mysql-connector
+# Connect to server
+
+import mysql.connector
+from sqlalchemy import create_engine
+MySQLdb.connect("127.0.0.1","root","","db" )
+engine = create_engine('mysql+mysqlconnector://quant:loginme@nuc.lan/quant', echo=False)
+
+#cnx = mysql.connector.connect(
+#    host="nuc.lan",
+#    port=3306,
+#    user="quant",
+#    password="loginme")
+
+# Get a cursor
+
+
 
 calledTimes = 0
 
@@ -26,7 +45,25 @@ calledTimes = 0
 def dataframeFromMySQL(MysqlConn,WKN):
     return 0
 
-def dataframeToMySQL(df,MysqlConn,WKN):
+def dataframeToMySQL(df,MysqlConn):
+    
+    #cur = MysqlConn.cursor()
+    df.to_sql(con=MysqlConn, name='StockQuotesDaily', if_exists='append', index = False)
+    # Execute a query
+    #cur.execute("SELECT CURDATE()")
+
+    # Fetch one result
+    #row = cur.fetchone()
+    #print("Current date is: {0}".format(row[0]))
+
+
+    #cur.execute("SHOW VARIABLES LIKE '%version%'")
+    #remaining_rows = cur.fetchall()
+    # Close connection
+    
+
+
+    #INSERT INTO `StockQuotesDaily`(`isin`, `name`, `symbol`, `qdate`, `open`, `high`, `low`, `close`, `volume`) VALUES ([value-1],[value-2],[value-3],[value-4],[value-5],[value-6],[value-7],[value-8],[value-9])
     return 0
 
 
@@ -128,12 +165,13 @@ driver = webdriver.Chrome(r"C:\\Users\\d047102\\Desktop\\StockIntelligenceDataSe
 #//*[@id="app--idDemoSearchField-inner"]
 
 driver.get("https://www.comdirect.de/inf/index.html")
-driver.maximize_window()
+#driver.maximize_window()
 #driver.implicitly_wait(2)
-WebDriverWait(driver, 60).until(ec.presence_of_element_located((By.XPATH, './/*[@id="uc-btn-accept-banner"]')))
-YesButton = driver.find_elements_by_xpath('.//*[@id="uc-btn-accept-banner"]')
+# /html/body/div[6]/div[2]/div/div[2]/div[1]/button
+YesButton = WebDriverWait(driver, 60).until(ec.presence_of_element_located((By.XPATH, './/html/body/div[6]/div[2]/div/div[2]/div[1]/button')))
+#YesButton = driver.find_elements_by_xpath('.//*[@id="uc-btn-accept-banner"]')
 
-YesButton[0].click()
+YesButton.click()
 
 searchField = driver.find_elements_by_xpath('.//*[@id="search_form"]/input')
 print("Element is visible? " + str(searchField[0].is_displayed()))
@@ -171,7 +209,7 @@ driver.execute_script("arguments[0].scrollIntoView();", WebDriverWait(driver, 20
 time.sleep(1)
 ActionChains(driver).move_to_element(WebDriverWait(driver, 20).until(ec.element_to_be_clickable((By.CSS_SELECTOR, "#chartForm > div.button-area.outer-spacing--none > div > div > div.button-group__container.hidden-sm.hidden-md > a:nth-child(8) > span")))).click().perform()
 
-time.sleep(2)
+#time.sleep(2)
 
 
 time.sleep(2)
@@ -191,6 +229,7 @@ recordcount = -1
 while recordcount != 0:
     (recordcount,df) = getTableValuesOnePage(driver,ec)
     print('recordcount: ' + str(recordcount))
+    dataframeToMySQL(df,engine)
 
     time.sleep(1)
     driver.execute_script("arguments[0].scrollIntoView();", WebDriverWait(driver, 20).until(ec.visibility_of_element_located((By.CLASS_NAME, 'icon__svg'))))
@@ -199,6 +238,9 @@ while recordcount != 0:
     time.sleep(1)
     driver.execute_script("arguments[0].scrollIntoView();", WebDriverWait(driver, 20).until(ec.visibility_of_element_located((By.XPATH, './/*[@id="FORM_KURSDATEN"]/div[3]'))))
 
-    
+
+cnx.close()
+
+
 
 
