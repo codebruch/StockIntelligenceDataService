@@ -7,6 +7,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import Select
 from selenium.common.exceptions import TimeoutException
+from decimal import Decimal
 import decimal 
 import os, sys
 import datetime
@@ -18,24 +19,29 @@ import socketio
 import json
 import pandas as pd
 import mysql.connector
-#import MySQLdb
+from dateutil.parser import parse
+from sqlalchemy import Numeric
+
 #pip install mysql-connector
+#import MySQLdb
 # Connect to server
 import keyring
 #keyring.set_password("system", "quant", "")
 pw = keyring.get_password("system", "quant")
+locale.setlocale(locale.LC_ALL, 'german')
 
 import mysql.connector
 from sqlalchemy import create_engine
 
-#MySQLdb.connect("nuc.lan","root",pw,"quant" )
-engine = create_engine('mysql+mysqlconnector://quant:'+pw+'@nuc.lan/quant', echo=True)
+#cnx = MySQLdb.connect("nuc.lan","quant",pw,"quant" )
+engine = create_engine('mysql+mysqlconnector://quant:'+pw+'@nuc.lan/quant', echo=False)
 
-#cnx = mysql.connector.connect(
-#    host="nuc.lan",
-#    port=3306,
-#    user="quant",
-#    password=pw)
+cnx = mysql.connector.connect(
+    host="nuc.lan",
+    port=3306,
+    user="quant",
+    password=pw,
+    database="quant")
 
 # Get a cursor
 
@@ -49,10 +55,12 @@ calledTimes = 0
 def dataframeFromMySQL(MysqlConn,WKN):
     return 0
 
-def dataframeToMySQL(df,MysqlConn):
+def dataframeToMySQL(df,MysqlConn,WKN):
     
-    #cur = MysqlConn.cursor()
-    df.to_sql(con=MysqlConn, name='StockQuotesDaily', if_exists='append', index = False)
+ 
+
+    df['wkn'] = WKN
+    df.to_sql(con=MysqlConn, name='StockQuotesDailyDF', if_exists='append',  dtype={"Open": Numeric(),"High": Numeric(),"Low": Numeric(),"Close": Numeric()})
     # Execute a query
     #cur.execute("SELECT CURDATE()")
 
@@ -102,28 +110,35 @@ def getTableValuesOnePage(driver,ec):
     time.sleep(2)
     for record in records:
 
-        print('cnt: '+str(cnt))
+        #print('cnt: '+str(cnt))
         #print(record)
         ccount = cnt % 6
         if ccount == 0:
-            print('Date: ' + record.text)
-            Date = record.text
+            #print('Date: ' + record.text)
+            dt = parse(record.text)
+            Date = dt#Date(record.text)
         if ccount == 1:
-            print('Open: ' + record.text)
-            Open = record.text
+            #print('Open: ' + record.text)
+            Open = locale.atof(record.text, decimal.Decimal)
         if ccount == 2:
-            print('High: ' + record.text)
-            High = record.text  
+            #print('High: ' + record.text)
+            High = locale.atof(record.text, decimal.Decimal)
         if ccount == 3:
-            print('Low: ' + record.text)
-            Low = record.text  
+            #print('Low: ' + record.text)
+            Low = locale.atof(record.text, decimal.Decimal)
         if ccount == 4:
-            print('Close: ' + record.text)
-            Close = record.text 
+            #print('Close: ' + record.text)
+            Close = locale.atof(record.text, decimal.Decimal)
         if ccount == 5:
-            print('Volume: ' + record.text)
+            #print('Volume: ' + record.text)
             Volume = record.text
-                
+            if "Mio." in Volume:
+                vpre= Volume.split('Mio.')[0]
+                vpre = int(vpre) * 1000000
+                Volume = vpre
+
+
+        if ccount == 5:       
             dfTmp = pd.DataFrame(
             {"Date" : [Date],
             "Open" : [Open],
@@ -132,7 +147,7 @@ def getTableValuesOnePage(driver,ec):
             "Close" : [Close],
             "Volume" : [Volume]
             })
-            df.append(dfTmp)
+            df = df.append(dfTmp)
 
 
             
@@ -229,11 +244,19 @@ ActionChains(driver).move_to_element(WebDriverWait(driver, 20).until(ec.element_
 
 #//*[@id="id_pricedata-layer"]/div/div[2]/div/div/div/div/div/div/div[3]/div[1]/div[2]
 
+cur = cnx.cursor()
+cur.execute("DELETE FROM `StockQuotesDailyDF` WHERE `wkn`='"+str(wkn)+"'" )
+
+cnx.commit()
+
+print(cur.rowcount, "record(s) deleted")
+cnx.close()
+
 recordcount = -1
 while recordcount != 0:
     (recordcount,df) = getTableValuesOnePage(driver,ec)
-    print('recordcount: ' + str(recordcount))
-    dataframeToMySQL(df,engine)
+    print('recordcount: ' + str(df.count()))
+    dataframeToMySQL(df.copy(),engine,wkn)
 
     time.sleep(1)
     driver.execute_script("arguments[0].scrollIntoView();", WebDriverWait(driver, 20).until(ec.visibility_of_element_located((By.CLASS_NAME, 'icon__svg'))))
@@ -243,7 +266,7 @@ while recordcount != 0:
     driver.execute_script("arguments[0].scrollIntoView();", WebDriverWait(driver, 20).until(ec.visibility_of_element_located((By.XPATH, './/*[@id="FORM_KURSDATEN"]/div[3]'))))
 
 
-cnx.close()
+#cnx.close()
 
 
 
