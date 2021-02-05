@@ -19,7 +19,7 @@ import argparse
 import socketio
 import json
 import pandas as pd
-import mysql.connector
+import mysql.connector # pip install mysql-connector-python
 from dateutil.parser import parse
 from sqlalchemy import Numeric
 from sqlalchemy import Date
@@ -34,7 +34,6 @@ pw = keyring.get_password("system", "quant")
 #locale.setlocale(locale.LC_ALL, 'german')
 locale.setlocale(locale.LC_ALL, 'german')
 
-import mysql.connector
 from sqlalchemy import create_engine
 
 #cnx = MySQLdb.connect("nuc.lan","quant",pw,"quant" )
@@ -193,7 +192,7 @@ prefs = {"download.default_directory":path}
 chrome_options.add_experimental_option("prefs", prefs)
 
 
-driver = webdriver.Chrome(r"C:\\Users\\d047102\\Desktop\\StockIntelligenceDataService\\chromedriver.exe",options=chrome_options) #C:\\Users\\d047102\\Desktop\\DemoDataGrabber
+driver = webdriver.Chrome(os.getcwd()+"\\chromedriver.exe",options=chrome_options) #C:\\Users\\d047102\\Desktop\\DemoDataGrabber
 #//*[@id="app--idDemoSearchField-inner"]
 
 driver.get("https://www.comdirect.de/inf/index.html")
