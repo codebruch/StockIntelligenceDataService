@@ -217,7 +217,24 @@ searchButton[0].click()
 
 
 WebDriverWait(driver, 20).until(ec.visibility_of_element_located((By.LINK_TEXT, 'Chart')))
+stockName = WebDriverWait(driver, 60).until(ec.presence_of_element_located((By.XPATH, './/html/body/div[3]/div/div[2]/div[6]/div[1]/div/div/div[5]/div/div/p')))
 
+childs = driver.find_elements_by_class_name('simple-table__cell')
+
+prev = childs[0]
+curr = childs[1]
+
+for nxt in childs[2:]:
+    #print('prev: {prev}, curr: {curr}, next: {nxt}')
+    prev = curr
+    curr = nxt
+    if prev.text == 'Symbol':
+        sname = curr.text
+        break
+
+
+#stockName = driver.find_elements_by_xpath('.//html/body/div[3]/div/div[2]/div[6]/div[1]/div/div/div[5]/div/div/div/table/tbody/tr[10]/td[2]')
+#sname = stockName[0].text
 
 
 
@@ -257,6 +274,9 @@ ActionChains(driver).move_to_element(WebDriverWait(driver, 20).until(ec.element_
 #//*[@id="id_pricedata-layer"]/div/div[2]/div/div/div/div/div/div/div[3]/div[1]/div[2]
 
 cur = cnx.cursor()
+
+#
+cur.execute("INSERT IGNORE INTO `isintoname`(`isin`, `name`) VALUES ('"+str(wkn)+"','"+str(sname)+"')" )
 cur.execute("DELETE FROM `StockQuotesDailyDF` WHERE `wkn`='"+str(wkn)+"'" )
 
 cnx.commit()
@@ -266,9 +286,10 @@ cnx.close()
 
 recordcount = -1
 while recordcount != 0:
-    (recordcount,df) = getTableValuesOnePage(driver,ec)
-    print('recordcount: ' + str(df.count()))
+    
     try:
+        (recordcount,df) = getTableValuesOnePage(driver,ec)
+        print('recordcount: ' + str(df.count()))
         dataframeToMySQL(df.copy(),engine,wkn)
     except StaleElementReferenceException as e:
         print(e)
@@ -280,13 +301,37 @@ while recordcount != 0:
     driver.execute_script("arguments[0].scrollIntoView();", WebDriverWait(driver, 20).until(ec.visibility_of_element_located((By.CLASS_NAME, 'icon__svg'))))
     
     if recordcount > 0: ## then this timeout here marks the end
+        try:
+            acele = ActionChains(driver).move_to_element(WebDriverWait(driver, 20).until(ec.element_to_be_clickable((By.XPATH, './/*[@id="id_pricedata-layer"]/div/div[2]/div/div/div/div/div/div/div[3]/div[1]/div[2]'))))
+            #ele = ActionChains(driver).move_to_element(WebDriverWait(driver, 20).until(ec.element_to_be_clickable((By.XPATH, './/*[@id="id_pricedata-layer"]/div/div[2]/div/div/div/div/div/div/div[3]/div[1]/div[2]'))))
+            #ActionChains(driver).move_to_element(WebDriverWait(driver, 20).until(ec.element_to_be_clickable((By.XPATH, './/*[@id="id_pricedata-layer"]/div/div[2]/div/div/div/div/div/div/div[3]/div[1]/div[2]/button'))))
+            acele.click().perform()
+            time.sleep(1)
+            element = driver.find_elements_by_xpath('.//*[@id="id_pricedata-layer"]/div/div[2]/div/div/div/div/div/div/div[3]/div[1]/div[2]/button')
+            if len(element) > 0:
+                if element[0].is_enabled() == True:
+                # //*[@id="id_pricedata-layer"]/div/div[2]/div/div/div/div/div/div/div[3]/div[1]/div[2]/button
+                    print("button enabled already clicked")
+                    #element[0].click()
+                else:
+                    print("end: ")
+                    exit(0)
+            else:
+                print("button tag not found")
 
+            time.sleep(1)
+            driver.execute_script("arguments[0].scrollIntoView();", WebDriverWait(driver, 20).until(ec.visibility_of_element_located((By.XPATH, './/*[@id="FORM_KURSDATEN"]/div[3]'))))
+        except TimeoutException as e:
+            print("end: " + str(e))
+            engine.close()
+            exit(0)
+    else:
         ActionChains(driver).move_to_element(WebDriverWait(driver, 20).until(ec.element_to_be_clickable((By.XPATH, './/*[@id="id_pricedata-layer"]/div/div[2]/div/div/div/div/div/div/div[3]/div[1]/div[2]')))).click().perform()
         time.sleep(1)
         driver.execute_script("arguments[0].scrollIntoView();", WebDriverWait(driver, 20).until(ec.visibility_of_element_located((By.XPATH, './/*[@id="FORM_KURSDATEN"]/div[3]'))))
 
 
-#cnx.close()
+
 
 
 
