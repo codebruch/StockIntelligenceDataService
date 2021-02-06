@@ -23,7 +23,7 @@ import mysql.connector # pip install mysql-connector-python
 from dateutil.parser import parse
 from sqlalchemy import Numeric
 from sqlalchemy import Date
-import dateparser # pip install dateparser
+import dateparser # pip install dateparser # setx path "%path%;C:\Program Files (x86)\Microsoft Visual C++ Build Tools"
 
 #pip install mysql-connector
 #import MySQLdb
