@@ -281,9 +281,9 @@ while recordcount != 0:
     
     if recordcount > 0: ## then this timeout here marks the end
 
-    ActionChains(driver).move_to_element(WebDriverWait(driver, 20).until(ec.element_to_be_clickable((By.XPATH, './/*[@id="id_pricedata-layer"]/div/div[2]/div/div/div/div/div/div/div[3]/div[1]/div[2]')))).click().perform()
-    time.sleep(1)
-    driver.execute_script("arguments[0].scrollIntoView();", WebDriverWait(driver, 20).until(ec.visibility_of_element_located((By.XPATH, './/*[@id="FORM_KURSDATEN"]/div[3]'))))
+        ActionChains(driver).move_to_element(WebDriverWait(driver, 20).until(ec.element_to_be_clickable((By.XPATH, './/*[@id="id_pricedata-layer"]/div/div[2]/div/div/div/div/div/div/div[3]/div[1]/div[2]')))).click().perform()
+        time.sleep(1)
+        driver.execute_script("arguments[0].scrollIntoView();", WebDriverWait(driver, 20).until(ec.visibility_of_element_located((By.XPATH, './/*[@id="FORM_KURSDATEN"]/div[3]'))))
 
 
 #cnx.close()
