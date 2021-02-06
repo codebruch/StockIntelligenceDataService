@@ -63,7 +63,7 @@ def dataframeToMySQL(df,MysqlConn,WKN):
     
 
     df['wkn'] = WKN
-    df.to_sql(con=MysqlConn, name='StockQuotesDailyDF', if_exists='append',  dtype={"Date": Date(), "Open": Numeric(precision=8, scale=2, decimal_return_scale=2),"High": Numeric(),"Low": Numeric(),"Close": Numeric()})
+    df.to_sql(con=MysqlConn, name='StockQuotesDailyDF', if_exists='append',  dtype={"Date": Date(), "Open": Numeric(precision=4, scale=2, decimal_return_scale=2),"High": Numeric(),"Low": Numeric(),"Close": Numeric()})
     # Execute a query
     #cur.execute("SELECT CURDATE()")
 
@@ -279,7 +279,9 @@ while recordcount != 0:
           
     time.sleep(2)
     driver.execute_script("arguments[0].scrollIntoView();", WebDriverWait(driver, 20).until(ec.visibility_of_element_located((By.CLASS_NAME, 'icon__svg'))))
-   
+    
+    if recordcount > 0: ## then this timeout here marks the end
+
     ActionChains(driver).move_to_element(WebDriverWait(driver, 20).until(ec.element_to_be_clickable((By.XPATH, './/*[@id="id_pricedata-layer"]/div/div[2]/div/div/div/div/div/div/div[3]/div[1]/div[2]')))).click().perform()
     time.sleep(1)
     driver.execute_script("arguments[0].scrollIntoView();", WebDriverWait(driver, 20).until(ec.visibility_of_element_located((By.XPATH, './/*[@id="FORM_KURSDATEN"]/div[3]'))))
