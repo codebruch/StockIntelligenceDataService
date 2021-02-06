@@ -8,6 +8,8 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import Select
 from selenium.common.exceptions import TimeoutException
 from selenium.common.exceptions import StaleElementReferenceException
+from selenium.common.exceptions import MoveTargetOutOfBoundsException
+
 from decimal import Decimal
 import decimal 
 import os, sys
@@ -217,7 +219,7 @@ searchButton[0].click()
 
 
 WebDriverWait(driver, 20).until(ec.visibility_of_element_located((By.LINK_TEXT, 'Chart')))
-stockName = WebDriverWait(driver, 60).until(ec.presence_of_element_located((By.XPATH, './/html/body/div[3]/div/div[2]/div[6]/div[1]/div/div/div[5]/div/div/p')))
+#stockName = WebDriverWait(driver, 60).until(ec.presence_of_element_located((By.XPATH, './/html/body/div[3]/div/div[2]/div[6]/div[1]/div/div/div[5]/div/div/p')))
 
 childs = driver.find_elements_by_class_name('simple-table__cell')
 
@@ -245,9 +247,19 @@ if len(selectMarket) > 0:
 
 
 time.sleep(2)
-driver.execute_script("arguments[0].scrollIntoView();", WebDriverWait(driver, 20).until(ec.visibility_of_element_located((By.LINK_TEXT, 'Chart'))))
+chart = driver.execute_script("arguments[0].scrollIntoView();", WebDriverWait(driver, 20).until(ec.visibility_of_element_located((By.LINK_TEXT, 'Chart'))))
 time.sleep(1)
-ActionChains(driver).move_to_element(WebDriverWait(driver, 20).until(ec.element_to_be_clickable((By.CSS_SELECTOR, "body > div.cif-scope-content-wrapper.siteFrame.advertising-scope > div > div:nth-child(2) > div.col__content.col__content--no-padding.hidden-print.bg-color--cd-black-7 > div > div > div > div.button-group__container.hidden-sm > a:nth-child(4) > span")))).click().perform()
+
+#click on chart
+try:
+    #ActionChains(driver).move_to_element(WebDriverWait(driver, 10).until(ec.element_to_be_clickable((By.XPATH, ".//html/body/div[3]/div/div[2]/div[5]/div[2]/div")))).click().perform()
+    ActionChains(driver).move_to_element(WebDriverWait(driver, 10).until(ec.element_to_be_clickable((By.LINK_TEXT, "Chart")))).click().perform()
+    
+except MoveTargetOutOfBoundsException:
+    ActionChains(driver).move_to_element(WebDriverWait(driver, 10).until(ec.element_to_be_clickable((By.CLASS_NAME, "chart__inner")))).click().perform()
+    
+
+#ActionChains(driver).move_to_element(WebDriverWait(driver, 20).until(ec.element_to_be_clickable((By.CSS_SELECTOR, "body > div.cif-scope-content-wrapper.siteFrame.advertising-scope > div > div:nth-child(2) > div.col__content.col__content--no-padding.hidden-print.bg-color--cd-black-7 > div > div > div > div.button-group__container.hidden-sm > a:nth-child(4) > span")))).click().perform()
 
 driver.implicitly_wait(5)
 
