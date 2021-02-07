@@ -1,35 +1,35 @@
-rem python GrabStockData.py --wkn PF6J6K
-rem python GrabStockData.py --wkn A28M8D bug
-python GrabStockData.py --wkn ETF128
-python GrabStockData.py --wkn 896360
-python GrabStockData.py --wkn A2PQVE
-python GrabStockData.py --wkn A0H072
-python GrabStockData.py --wkn A0TGJ5
-python GrabStockData.py --wkn A1KWPR
-python GrabStockData.py --wkn A2PLDF
-python GrabStockData.py --wkn 890167
-python GrabStockData.py --wkn A2AP36
-python GrabStockData.py --wkn A2H51D
-python GrabStockData.py --wkn A0DK6Z
-python GrabStockData.py --wkn A12ATG
-python GrabStockData.py --wkn A1JMDF
-python GrabStockData.py --wkn 622391
-python GrabStockData.py --wkn ETF701
-python GrabStockData.py --wkn ETF007
-python GrabStockData.py --wkn A1J784
-python GrabStockData.py --wkn A0MW0M
-python GrabStockData.py --wkn A113FJ
-python GrabStockData.py --wkn 857209
-python GrabStockData.py --wkn 855686
-python GrabStockData.py --wkn A0B87V
-python GrabStockData.py --wkn A142NZ
-python GrabStockData.py --wkn 870747
-python GrabStockData.py --wkn 863186
-python GrabStockData.py --wkn A1J4U4
-python GrabStockData.py --wkn 909800
-python GrabStockData.py --wkn 865985
-python GrabStockData.py --wkn A2H57A
-python GrabStockData.py --wkn 918422
-python GrabStockData.py --wkn MA25R0
-python GrabStockData.py --wkn PF4Q6G
-python GrabStockData.py --wkn A2PR0M
+rem python GrabStockData.py --wkn PF6J6K  -d 1
+rem python GrabStockData.py --wkn A28M8D -d 1
+rem python GrabStockData.py --wkn ETF128  -d 1
+rem python GrabStockData.py --wkn 896360  -d 1
+rem python GrabStockData.py --wkn A2PQVE  -d 1
+rem python GrabStockData.py --wkn A0H072  -d 1
+rem python GrabStockData.py --wkn A0TGJ5  -d 1
+rem python GrabStockData.py --wkn A1KWPR  -d 1
+rem python GrabStockData.py --wkn A2PLDF  -d 1
+rem python GrabStockData.py --wkn 890167  -d 1
+rem python GrabStockData.py --wkn A2AP36  -d 1
+rem python GrabStockData.py --wkn A2H51D  -d 1
+rem python GrabStockData.py --wkn A0DK6Z  -d 1
+rem python GrabStockData.py --wkn A12ATG  -d 1
+rem python GrabStockData.py --wkn A1JMDF  -d 1
+rem python GrabStockData.py --wkn 622391  -d 1
+rem python GrabStockData.py --wkn ETF701  -d 1
+rem python GrabStockData.py --wkn ETF007  -d 1
+rem python GrabStockData.py --wkn A1J784  -d 1
+rem python GrabStockData.py --wkn A0MW0M  -d 1
+rem python GrabStockData.py --wkn A113FJ  -d 1
+rem rem python GrabStockData.py --wkn 857209  -d 1
+python GrabStockData.py --wkn 855686  -d 1
+python GrabStockData.py --wkn A0B87V  -d 1
+python GrabStockData.py --wkn A142NZ  -d 1
+python GrabStockData.py --wkn 870747  -d 1
+python GrabStockData.py --wkn 863186  -d 1
+python GrabStockData.py --wkn A1J4U4  -d 1
+python GrabStockData.py --wkn 909800  -d 1
+python GrabStockData.py --wkn 865985  -d 1
+python GrabStockData.py --wkn A2H57A  -d 1
+python GrabStockData.py --wkn 918422  -d 1
+python GrabStockData.py --wkn MA25R0  -d 1
+python GrabStockData.py --wkn PF4Q6G  -d 1
+python GrabStockData.py --wkn A2PR0M  -d 1

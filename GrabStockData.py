@@ -9,6 +9,7 @@ from selenium.webdriver.support.ui import Select
 from selenium.common.exceptions import TimeoutException
 from selenium.common.exceptions import StaleElementReferenceException
 from selenium.common.exceptions import MoveTargetOutOfBoundsException
+from selenium.common.exceptions import NoSuchElementException
 
 from decimal import Decimal
 import decimal 
@@ -166,14 +167,17 @@ def getTableValuesOnePage(driver,ec):
             cnt = (cnt + 1)
     except (TimeoutException):
         print("end of pagination")
-        return (df.count(),df)
+        return (df.size,df)
 
     return  (cnt,df) 
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-w', '--wkn')
+parser.add_argument('-d', '--deleteFlag', default=0,)
 args = parser.parse_args()
 wkn = args.wkn
+deleteFlag = args.deleteFlag
+
 
 #locale.setlocale(locale.LC_ALL, 'de_DE.UTF-8') # 
 print(os.getcwd())
@@ -194,6 +198,28 @@ prefs = {"download.default_directory":path}
 chrome_options.add_experimental_option("prefs", prefs)
 
 
+def checkDB(wkn,deletFlag):
+    cur = cnx.cursor()
+
+
+    cur.execute("select count(*) from `StockQuotesDailyDF` WHERE `wkn`='"+str(wkn)+"'" )
+
+    count = cur.fetchone()
+
+    if count[0] > 0 and deletFlag == '1':
+        cur.execute("DELETE FROM `StockQuotesDailyDF` WHERE `wkn`='"+str(wkn)+"'" )
+        cnx.commit()
+        print(cur.rowcount, "record(s) deleted")
+        
+    if count[0] > 0 and deletFlag == 0:
+        print("Data already in DB for: "+str(wkn) )
+        cnx.close()
+        exit(0)
+
+
+
+
+checkDB(wkn,deleteFlag)
 driver = webdriver.Chrome(os.getcwd()+"\\chromedriver.exe",options=chrome_options) #C:\\Users\\d047102\\Desktop\\DemoDataGrabber
 #//*[@id="app--idDemoSearchField-inner"]
 
@@ -234,7 +260,20 @@ for nxt in childs[2:]:
         sname = curr.text
         break
 
+if sname == '--':
+    sname = wkn
 
+childs = driver.find_elements_by_xpath('.//html/body/div[3]/div/div[2]/div[1]/div[1]/div/h1')
+if len(childs) == 0:
+    childs = driver.find_elements_by_xpath('.//html/body/div[3]/div/div[2]/div[1]/div[1]/div[1]/div/h1')
+    
+
+stockname = childs[0].text.strip()
+
+#
+cur = cnx.cursor()
+cur.execute("REPLACE INTO `isintoname`(`isin`, `name`, `long_name` ) VALUES ('"+str(wkn)+"','"+str(sname)+"','"+str(stockname)+"')" )
+cnx.commit()
 #stockName = driver.find_elements_by_xpath('.//html/body/div[3]/div/div[2]/div[6]/div[1]/div/div/div[5]/div/div/div/table/tbody/tr[10]/td[2]')
 #sname = stockName[0].text
 
@@ -242,8 +281,19 @@ for nxt in childs[2:]:
 
 selectMarket = driver.find_elements_by_xpath('.//*[@id="marketSelect"]')
 if len(selectMarket) > 0:
-    selectMarket[0]
-    Select(selectMarket[0]).select_by_visible_text('Xetra')
+    try:
+        if wkn == 'A0B87V':
+            Select(selectMarket[0]).select_by_visible_text('LT Lang & Schwarz')
+        else:
+            if wkn == '622391':  
+                Select(selectMarket[0]).select_by_visible_text('Fondsges. in EUR')
+            else:    
+                if  wkn.startswith(('PF')):
+                    Select(selectMarket[0]).select_by_visible_text('LT BNP Paribas')
+                else:
+                    Select(selectMarket[0]).select_by_visible_text('Xetra')
+    except  NoSuchElementException:
+        Select(selectMarket[0]).select_by_visible_text('LT Lang & Schwarz')
 
 
 time.sleep(2)
@@ -285,16 +335,6 @@ ActionChains(driver).move_to_element(WebDriverWait(driver, 20).until(ec.element_
 
 #//*[@id="id_pricedata-layer"]/div/div[2]/div/div/div/div/div/div/div[3]/div[1]/div[2]
 
-cur = cnx.cursor()
-
-#
-cur.execute("INSERT IGNORE INTO `isintoname`(`isin`, `name`) VALUES ('"+str(wkn)+"','"+str(sname)+"')" )
-#cur.execute("DELETE FROM `StockQuotesDailyDF` WHERE `wkn`='"+str(wkn)+"'" )
-
-cnx.commit()
-
-print(cur.rowcount, "record(s) deleted")
-cnx.close()
 
 recordcount = -1
 while recordcount != 0:
@@ -309,7 +349,7 @@ while recordcount != 0:
         print('after stale recordcount: ' + str(df.count()))
         dataframeToMySQL(df.copy(),engine,wkn)
           
-    time.sleep(2)
+    time.sleep(0.2)
     driver.execute_script("arguments[0].scrollIntoView();", WebDriverWait(driver, 20).until(ec.visibility_of_element_located((By.CLASS_NAME, 'icon__svg'))))
     
     if recordcount > 0: ## then this timeout here marks the end
@@ -318,7 +358,7 @@ while recordcount != 0:
             #ele = ActionChains(driver).move_to_element(WebDriverWait(driver, 20).until(ec.element_to_be_clickable((By.XPATH, './/*[@id="id_pricedata-layer"]/div/div[2]/div/div/div/div/div/div/div[3]/div[1]/div[2]'))))
             #ActionChains(driver).move_to_element(WebDriverWait(driver, 20).until(ec.element_to_be_clickable((By.XPATH, './/*[@id="id_pricedata-layer"]/div/div[2]/div/div/div/div/div/div/div[3]/div[1]/div[2]/button'))))
             acele.click().perform()
-            time.sleep(1)
+            time.sleep(0.2)
             element = driver.find_elements_by_xpath('.//*[@id="id_pricedata-layer"]/div/div[2]/div/div/div/div/div/div/div[3]/div[1]/div[2]/button')
             if len(element) > 0:
                 if element[0].is_enabled() == True:
@@ -327,19 +367,23 @@ while recordcount != 0:
                     #element[0].click()
                 else:
                     print("end: ")
+                    cnx.close()
                     exit(0)
             else:
-                print("button tag not found")
+                print("button tag not found, scrolling up")
+                #cnx.close()
+                #exit(0)
 
-            time.sleep(1)
+            time.sleep(0.2)
             driver.execute_script("arguments[0].scrollIntoView();", WebDriverWait(driver, 20).until(ec.visibility_of_element_located((By.XPATH, './/*[@id="FORM_KURSDATEN"]/div[3]'))))
         except TimeoutException as e:
             print("end: " + str(e))
+            cnx.close()
             engine.close()
             exit(0)
     else:
         ActionChains(driver).move_to_element(WebDriverWait(driver, 20).until(ec.element_to_be_clickable((By.XPATH, './/*[@id="id_pricedata-layer"]/div/div[2]/div/div/div/div/div/div/div[3]/div[1]/div[2]')))).click().perform()
-        time.sleep(1)
+        time.sleep(0.2)
         driver.execute_script("arguments[0].scrollIntoView();", WebDriverWait(driver, 20).until(ec.visibility_of_element_located((By.XPATH, './/*[@id="FORM_KURSDATEN"]/div[3]'))))
 
 
