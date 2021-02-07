@@ -282,7 +282,7 @@ cnx.commit()
 selectMarket = driver.find_elements_by_xpath('.//*[@id="marketSelect"]')
 if len(selectMarket) > 0:
     try:
-        if wkn == 'A0B87V':
+        if wkn == 'A0B87V' or wkn == '857209':
             Select(selectMarket[0]).select_by_visible_text('LT Lang & Schwarz')
         else:
             if wkn == '622391':  

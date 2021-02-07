@@ -19,7 +19,7 @@ rem python GrabStockData.py --wkn ETF007  -d 1
 rem python GrabStockData.py --wkn A1J784  -d 1
 rem python GrabStockData.py --wkn A0MW0M  -d 1
 rem python GrabStockData.py --wkn A113FJ  -d 1
-rem rem python GrabStockData.py --wkn 857209  -d 1
+rem python GrabStockData.py --wkn 857209  -d 1
 python GrabStockData.py --wkn 855686  -d 1
 python GrabStockData.py --wkn A0B87V  -d 1
 python GrabStockData.py --wkn A142NZ  -d 1
@@ -33,3 +33,5 @@ python GrabStockData.py --wkn 918422  -d 1
 python GrabStockData.py --wkn MA25R0  -d 1
 python GrabStockData.py --wkn PF4Q6G  -d 1
 python GrabStockData.py --wkn A2PR0M  -d 1
+python GrabStockData.py --wkn 857209  -d 1
+ 
