@@ -64,7 +64,7 @@ def dataframeToMySQL(df,MysqlConn,WKN):
     
 
     df['wkn'] = WKN
-    df.to_sql(con=MysqlConn, name='StockQuotesDailyDF', if_exists='append',  dtype={"Date": Date(), "Open": Numeric(precision=4, scale=2, decimal_return_scale=2),"High": Numeric(),"Low": Numeric(),"Close": Numeric()})
+    df.to_sql(con=MysqlConn, name='StockQuotesDailyDF', if_exists='append',  dtype={"Date": Date(), "Open": Numeric(precision=15, scale=2, decimal_return_scale=2),"High": Numeric(precision=15, scale=2, decimal_return_scale=2),"Low": Numeric(precision=15, scale=2, decimal_return_scale=2),"Close": Numeric(precision=15, scale=2, decimal_return_scale=2),"Volume":Numeric()})
     # Execute a query
     #cur.execute("SELECT CURDATE()")
 
@@ -289,7 +289,7 @@ cur = cnx.cursor()
 
 #
 cur.execute("INSERT IGNORE INTO `isintoname`(`isin`, `name`) VALUES ('"+str(wkn)+"','"+str(sname)+"')" )
-cur.execute("DELETE FROM `StockQuotesDailyDF` WHERE `wkn`='"+str(wkn)+"'" )
+#cur.execute("DELETE FROM `StockQuotesDailyDF` WHERE `wkn`='"+str(wkn)+"'" )
 
 cnx.commit()
 
